@@ -28,13 +28,13 @@ function TimerPage() {
                 setRunning(false);
 
                 if (time > 0) {
-                    setSolves((prev) => [time, ...prev]);
+                    setSolves((prev) => [{ time: time, penalty: 0 }, ...prev]);
                     setTime(0);
                 }
             } else {
                 setRunning(true);
             }
-            
+
         }
     };
 
@@ -52,15 +52,55 @@ function TimerPage() {
         if (solves.length < 5) return null;
 
         const last5 = solves.slice(0, 5);
-        const sorted = [...last5].sort((a, b) => a - b);
+        const dnfCount = last5.filter((s) => s.penalty === "DNF").length;
+
+        if (dnfCount >= 2) return "DNF";
+        const times = last5.map((s) =>
+            s.penalty === "DNF" ? Infinity : s.time + s.penalty
+        );
+
+        const sorted = [...times].sort((a, b) => a - b);
         const middle = sorted.slice(1, 4);
-        const average = middle.reduce((a, b) => a + b, 0) / middle.length;
-        return average;
+
+        if (middle.includes(Infinity)) return "DNF";
+
+        const avg = middle.reduce((a, b) => a + b, 0) / middle.length;
+        return avg;
     };
 
-   // useEffect(() => {
-   //     setScramble(generateScramble());
-   // }, [])
+    const addPlusTwo = (index) => {
+        setSolves((prev) =>
+            prev.map((solve, i) =>
+                i === index
+                    ? {
+                        ...solve,
+                        penalty: solve.penalty === 2000 ? 0 : 2000,
+                    }
+                    : solve
+            )
+        );
+    };
+
+    const setDNF = (index) => {
+        setSolves((prev) =>
+            prev.map((solve, i) =>
+                i === index
+                    ? {
+                        ...solve,
+                        penalty: solve.penalty === "DNF" ? 0 : "DNF",
+                    }
+                    : solve
+            )
+        );
+    };
+
+
+
+    // useEffect(() => {
+    //     setScramble(generateScramble());
+    // }, [])
+
+    const ao5 = calculateAo5();
 
     return (
         <div style={styles.container}>
@@ -68,23 +108,34 @@ function TimerPage() {
             <h1 style={styles.timer}>{formatTime(time)}</h1>
             <p>Press SPACE to start/stop</p>
             <p style={styles.average}>
-                Ao5: {calculateAo5() ? formatTime(calculateAo5()) : " - " }
+                Ao5: {ao5 === "DNF" ? "DNF" : ao5 ? formatTime(ao5) : "-"}
             </p>
 
             <div style={styles.solveList}>
                 <h3>Solves</h3>
+
                 {solves.map((solve, index) => (
-                    <p key={index}>
-                        {index + 1}. {formatTime(solve)}
-                    </p>
+                    <div key={index} style={styles.solveItem}>
+                        <span>
+                            {index + 1}.{" "}
+                            {solve.penalty === "DNF"
+                                ? "DNF"
+                                : formatTime(solve.time + solve.penalty)}
+                        </span>
+
+                        <div>
+                            <button onClick={() => addPlusTwo(index)}>+2</button>
+                            <button onClick={() => setDNF(index)}>DNF</button>
+                        </div>
+                    </div>
                 ))}
             </div>
         </div>
 
-     
-       
+
+
     );
-}
+};
 
 const styles = {
     container: {
@@ -105,7 +156,7 @@ const styles = {
         top: "40px",
         fontSize: "1.2rem",
         letterSpacing: "2px",
-        color: "F9FAFB"
+        color: "#F9FAFB"
     },
     solveList: {
         position: "absolute",
@@ -119,7 +170,14 @@ const styles = {
     average: {
         marginTop: "10px",
         color: "#9CA3AF"
-    }
+    },
+    solveItem: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "10px",
+        marginBottom: "5px",
+    },
 };
 
 export default TimerPage;
