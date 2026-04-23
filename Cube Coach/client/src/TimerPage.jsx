@@ -5,6 +5,8 @@ function TimerPage() {
     const [running, setRunning] = useState(false);
     const [scramble, setScramble] = useState("R U R' U'");
     const [solves, setSolves] = useState([]);
+    const [isHolding, setIsHolding] = useState(false);
+    const [isReady, setIsReady] = useState(false);
     
 
     useEffect(() => {
@@ -21,8 +23,11 @@ function TimerPage() {
         return () => clearInterval(interval);
     }, [running]);
 
-    const handleKeyDown = (e) => {
-        if (e.code === "Space") {
+    useEffect(() => {
+        let holdTimeout;
+
+        const handleKeyDown = (e) => {
+            if (e.code !== "Space") return;
             e.preventDefault();
 
             if (running) {
@@ -30,20 +35,46 @@ function TimerPage() {
 
                 if (time > 0) {
                     setSolves((prev) => [{ time: time, penalty: 0 }, ...prev]);
-                    setTime(0);
+                    
                     setScramble(generateScramble());
                 }
-            } else {
+                return;
+            }
+
+            if (e.repeat) return;
+
+            setIsHolding(true);
+
+            holdTimeout = setTimeout(() => {
+                setIsReady(true);
+            }, 400);
+        };
+
+        const handleKeyUp = (e) => {
+            if (e.code !== "Space") return;
+            e.preventDefault();
+
+            if (isReady && !running) {
+                setTime(0);
                 setRunning(true);
             }
 
-        }
-    };
+            setIsHolding(false);
+            setIsReady(false);
+            clearTimeout(holdTimeout);
+        };
 
-    useEffect(() => {
         window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [running, time]);
+        window.addEventListener("keyup", handleKeyUp);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+            clearTimeout(holdTimeout);
+        };
+    }, [running, time, isReady]);
+
+    
 
     const formatTime = (ms) => {
         const seconds = (ms / 1000).toFixed(2);
@@ -285,7 +316,14 @@ function TimerPage() {
     return (
         <div style={styles.container}>
             <p style={styles.scramble}>{scramble}</p>
-            <h1 style={styles.timer}>{formatTime(time)}</h1>
+            <h1
+                style={{
+                    ...styles.timer,
+                    color: isReady ? "#3F990B" : isHolding ? "#D43428" : "#F9FAFB",
+                }}
+            >
+                {formatTime(time)}
+            </h1>
             <p>Press SPACE to start/stop</p>
             <p style={styles.average}>
                 Ao5: {ao5 === "DNF" ? "DNF" : ao5 ? formatTime(ao5) : "-"}
