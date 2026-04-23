@@ -30,6 +30,7 @@ function TimerPage() {
                 if (time > 0) {
                     setSolves((prev) => [{ time: time, penalty: 0 }, ...prev]);
                     setTime(0);
+                    setScramble(generateScramble());
                 }
             } else {
                 setRunning(true);
@@ -94,11 +95,37 @@ function TimerPage() {
         );
     };
 
+    const generateScramble = () => {
+        const moves = ["R", "U", "F", "D", "B", "L"];
+        const moveExtra = ["", "'", "2"];
+
+        let scramble = [];
+        const scrambleLength = 25 - (Math.floor(Math.random() * 6));
+        let previousMove;
+        
+
+        for (let i = 0; i < scrambleLength; i++) {
+            let moveFirst;
+
+            do {
+                moveFirst = moves[Math.floor(Math.random() * moves.length)];
+            } while (moveFirst === previousMove);
+
+            const moveSecond = moveExtra[Math.floor(Math.random() * moveExtra.length)];
+            const move = moveFirst + moveSecond;
+
+            previousMove = moveFirst;
+            scramble.push(move);
+        }
+
+        return scramble.join(" ")
+    }
 
 
-    // useEffect(() => {
-    //     setScramble(generateScramble());
-    // }, [])
+
+    useEffect(() => {
+        setScramble(generateScramble());
+    }, [])
 
     const ao5 = calculateAo5();
 
