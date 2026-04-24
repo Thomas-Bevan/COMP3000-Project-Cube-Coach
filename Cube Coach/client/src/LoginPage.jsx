@@ -4,9 +4,25 @@ function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("login is:" + email + " " + password);
+        const res = await fetch("http://localhost:5000/api/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.message);
+            return;
+        }
+
+        localStorage.setItem("user", JSON.stringify(data));
+        alert("Logged in successfully");
 
     };
 

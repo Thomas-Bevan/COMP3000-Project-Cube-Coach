@@ -5,15 +5,31 @@ function RegisterPage() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (password !== confirmPassword) {
             alert("Passwords do not match");
             return;
         }
-        console.log("register deets:" + email + " " + password);
 
+        const res = await fetch("http://localhost:5000/api/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.message);
+            return;
+        }
+
+        localStorage.setItem("user", JSON.stringify(data));
+        alert("Registered successfully");
     };
 
     return (

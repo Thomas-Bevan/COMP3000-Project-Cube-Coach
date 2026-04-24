@@ -9,6 +9,8 @@ const generateToken = (id) => {
 };
 
 const registerUser = async (req, res) => {
+    console.log(" reached reggy route");
+    console.log(req.body);
     const { email, password } = req.body;
 
     if (!email || !password) {
