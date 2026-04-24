@@ -286,7 +286,6 @@ function TimerPage() {
             if (move.length === 1) { repeats = 1 }
             else if (move[1] === "'") { repeats = 3 }
             else (repeats = 2);
-            console.log("repeats = " + repeats);
             for (let i = 0; i < repeats; i++) {
                 if (move[0] === "U") cube = doU(cube);
                 if (move[0] === "D") cube = doD(cube);
