@@ -114,7 +114,24 @@ function TimerPage() {
             console.error("Failed to save solve", err);
         }
     };
-    
+
+    const deleteSolve = async (index) => {
+        if (!window.confirm("Delete this solve?")) return;
+        const solve = solves[index];
+
+        setSolves((prev) => prev.filter((_, i) => i !== index));
+
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (!user || !solve._id) return;
+
+        await fetch(`http://localhost:5000/api/solves/${solve._id}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${user.token}`
+            }
+        });
+    };
 
     const formatTime = (ms) => {
         const seconds = (ms / 1000).toFixed(2);
@@ -410,6 +427,7 @@ function TimerPage() {
                         <div>
                             <button onClick={() => addPlusTwo(index)}>+2</button>
                             <button onClick={() => setDNF(index)}>DNF</button>
+                            <button onClick={() => deleteSolve(index) }>X</button>
                         </div>
                     </div>
                 ))}
