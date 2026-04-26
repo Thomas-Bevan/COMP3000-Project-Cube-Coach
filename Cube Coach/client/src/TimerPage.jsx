@@ -7,7 +7,8 @@ function TimerPage() {
     const [solves, setSolves] = useState([]);
     const [isHolding, setIsHolding] = useState(false);
     const [isReady, setIsReady] = useState(false);
-    
+
+
 
     useEffect(() => {
         let interval;
@@ -26,7 +27,7 @@ function TimerPage() {
     useEffect(() => {
         let holdTimeout;
 
-        const handleKeyDown = (e) => {
+        const handleKeyDown = async (e) => {
             if (e.code !== "Space") return;
             e.preventDefault();
 
@@ -35,6 +36,9 @@ function TimerPage() {
 
                 if (time > 0) {
                     setSolves((prev) => [{ time: time, penalty: 0 }, ...prev]);
+
+
+                    saveSolveToDB(time, "0", scramble);
                     
                     setScramble(generateScramble());
                 }
@@ -74,6 +78,42 @@ function TimerPage() {
         };
     }, [running, time, isReady]);
 
+    useEffect(() => {
+        const fetchSolves = async () => {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user) return;
+
+            const res = await fetch("http://localhost:5000/api/solves", {
+                headers: {
+                    "Authorization": `Bearer ${user.token}`
+                }
+            });
+            const data = await res.json();
+            console.log(data);
+            console.log("test");
+            setSolves(data);
+        };
+        fetchSolves();
+    }, []);
+
+    const saveSolveToDB = async (time, penalty, scramble) => {
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (!user) return;
+
+        try {
+            await fetch("http://localhost:5000/api/solves", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${user.token}`
+                },
+                body: JSON.stringify({ time, penalty, scramble })
+            });
+        } catch (err) {
+            console.error("Failed to save solve", err);
+        }
+    };
     
 
     const formatTime = (ms) => {
@@ -89,7 +129,7 @@ function TimerPage() {
 
         if (dnfCount >= 2) return "DNF";
         const times = last5.map((s) =>
-            s.penalty === "DNF" ? Infinity : s.time + s.penalty
+            s.penalty === "DNF" ? Infinity : s.time + Number(s.penalty)
         );
 
         const sorted = [...times].sort((a, b) => a - b);
@@ -101,30 +141,57 @@ function TimerPage() {
         return avg;
     };
 
-    const addPlusTwo = (index) => {
+    const addPlusTwo = async (index) => {
+
+        const solve = solves[index];
+        const newPenalty = solve.penalty === "2000" ? "0" : "2000";
         setSolves((prev) =>
             prev.map((solve, i) =>
                 i === index
                     ? {
                         ...solve,
-                        penalty: solve.penalty === 2000 ? 0 : 2000,
+                        penalty: newPenalty
                     }
                     : solve
             )
         );
+
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || !solve._id) return;
+        await fetch(`http://localhost:5000/api/solves/${solve._id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${user.token}`
+            },
+            body: JSON.stringify({ penalty: String(newPenalty)}),
+        })
     };
 
-    const setDNF = (index) => {
+    const setDNF = async (index) => {
+        const solve = solves[index];
+        const newPenalty = solve.penalty === "DNF" ? "0" : "DNF";
         setSolves((prev) =>
             prev.map((solve, i) =>
                 i === index
                     ? {
                         ...solve,
-                        penalty: solve.penalty === "DNF" ? 0 : "DNF",
+                        penalty: newPenalty
                     }
                     : solve
             )
         );
+
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || !solve._id) return;
+        await fetch(`http://localhost:5000/api/solves/${solve._id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${user.token}`
+            },
+            body: JSON.stringify({ penalty: String(newPenalty) }),
+        })
     };
 
     const generateScramble = () => {
@@ -337,7 +404,7 @@ function TimerPage() {
                             {index + 1}.{" "}
                             {solve.penalty === "DNF"
                                 ? "DNF"
-                                : formatTime(solve.time + solve.penalty)}
+                                : formatTime(solve.time + Number(solve.penalty))}
                         </span>
 
                         <div>
