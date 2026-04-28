@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { findShorterCross } from "./utils/cubeUtils";
-import { createSolvedCube, applyAlgorithm, applyZ2 } from "./utils/cubeUtils";
+import { createSolvedCube, applyAlgorithm, applyZ2, findShorterF2L } from "./utils/cubeUtils";
 
 function AnalysisPage() {
     const [scramble, setScramble] = useState("");
@@ -52,10 +52,30 @@ function AnalysisPage() {
                 `No shorter cross was found up to depth 6.`;
         }
 
-        const f2lFeedback = f2lPairs
-            .map((pair, index) => {
-                const moves = countMoves(pair.solution);
-                return `F2L ${index + 1} (${pair.slot}) uses ${moves} moves.`;
+        const f2lResults = f2lPairs.map((pair, index) => {
+            const previousSolutions = f2lPairs.slice(0, index);
+
+            return findShorterF2L(
+                scramble,
+                crossSolution,
+                previousSolutions,
+                pair.slot,
+                pair.solution,
+                8
+            );
+        });
+
+        const f2lFeedback = f2lResults
+            .map((result, index) => {
+                if (!result.userF2LSolved) {
+                    return `F2L ${index + 1}: This solution does not solve the selected slot.`;
+                }
+
+                if (result.shorterSolution) {
+                    return `F2L ${index + 1}: You used ${result.userMoveCount} moves. Shorter solution found: ${result.shorterSolution}`;
+                }
+
+                return `F2L ${index + 1}: You used ${result.userMoveCount} moves. No shorter solution found.`;
             })
             .join("\n");
 

@@ -175,6 +175,50 @@ export const isWhiteCrossSolved = (cube) => {
     );
 };
 
+export const isF2LSlotSolved = (cube, slot) => {
+    if (slot === "FR") {
+        return (
+            cube.F[8] === "green" &&
+            cube.R[6] === "orange" &&
+            cube.F[5] === "green" &&
+            cube.R[3] === "orange" &&
+            cube.D[2] === "white"
+        );
+    }
+
+    if (slot === "FL") {
+        return (
+            cube.F[6] === "green" &&
+            cube.L[8] === "red" &&
+            cube.F[3] === "green" &&
+            cube.L[5] === "red" &&
+            cube.D[0] === "white"
+        );
+    }
+
+    if (slot === "BR") {
+        return (
+            cube.B[6] === "blue" &&
+            cube.R[8] === "orange" &&
+            cube.B[3] === "blue" &&
+            cube.R[5] === "orange" &&
+            cube.D[8] === "white"
+        );
+    }
+
+    if (slot === "BL") {
+        return (
+            cube.B[8] === "blue" &&
+            cube.L[6] === "red" &&
+            cube.B[5] === "blue" &&
+            cube.L[3] === "red" &&
+            cube.D[6] === "white"
+        );
+    }
+
+    return false;
+};
+
 const searchMoves = [
     "U", "U'", "U2",
     "D", "D'", "D2",
@@ -183,6 +227,51 @@ const searchMoves = [
     "F", "F'", "F2",
     "B", "B'", "B2",
 ];
+
+const f2lMoveSets = {
+    FR: ["R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2"],
+    FL: ["L", "L'", "L2", "U", "U'", "U2", "F", "F'", "F2"],
+    BR: ["R", "R'", "R2", "U", "U'", "U2", "B", "B'", "B2"],
+    BL: ["L", "L'", "L2", "U", "U'", "U2", "B", "B'", "B2"],
+};
+
+const dfsF2L = (cube, slot, previousSlots, depth, path, previousFace) => {
+    if (depth === 0) {
+        const previousStillSolved = previousSlots.every((s) =>
+            isF2LSlotSolved(cube, s)
+        );
+
+        return isWhiteCrossSolved(cube) &&
+            previousStillSolved &&
+            isF2LSlotSolved(cube, slot)
+            ? path
+            : null;
+    }
+
+    const moves = f2lMoveSets[slot];
+
+    for (const move of moves) {
+        const face = move[0];
+
+        if (face === previousFace) continue;
+
+        const nextCube = cloneCube(cube);
+        applyMove(nextCube, move);
+
+        const result = dfsF2L(
+            nextCube,
+            slot,
+            previousSlots,
+            depth - 1,
+            [...path, move],
+            face
+        );
+
+        if (result) return result;
+    }
+
+    return null;
+};
 
 const dfsCross = (cube, depth, path, previousFace) => {
     if (depth === 0) {
@@ -261,6 +350,66 @@ export const findShorterCross = (scramble, userCrossSolution, maxDepth = 6) => {
 
     return {
         userCrossSolved,
+        userMoveCount,
+        shorterSolution: null,
+    };
+
+};
+
+export const findShorterF2L = (
+    scramble,
+    crossSolution,
+    previousF2LSolutions,
+    slot,
+    userF2LSolution,
+    maxDepth = 8
+) => {
+    let cube = applyAlgorithm(createSolvedCube(), scramble);
+    cube = applyZ2(cube);
+
+
+    applyAlgorithm(cube, crossSolution);
+
+    previousF2LSolutions.forEach((pair) => {
+        applyAlgorithm(cube, pair.solution);
+    });
+
+    const previousSlots = previousF2LSolutions.map((pair) => pair.slot);
+
+    const userCube = cloneCube(cube);
+    applyAlgorithm(userCube, userF2LSolution);
+
+    const userF2LSolved =
+        isWhiteCrossSolved(userCube) && isF2LSlotSolved(userCube, slot);
+
+    const userMoveCount = userF2LSolution.trim()
+        ? userF2LSolution.trim().split(/\s+/).length
+        : 0;
+
+    const searchDepth = Math.min(maxDepth, userMoveCount - 1);
+
+    if (searchDepth < 1) {
+        return {
+            userF2LSolved,
+            userMoveCount,
+            shorterSolution: null,
+        };
+    }
+
+    for (let depth = 1; depth <= searchDepth; depth++) {
+        const result = dfsF2L(cube, slot, previousSlots, depth, [], null);
+
+        if (result) {
+            return {
+                userF2LSolved,
+                userMoveCount,
+                shorterSolution: result.join(" "),
+            };
+        }
+    }
+
+    return {
+        userF2LSolved,
         userMoveCount,
         shorterSolution: null,
     };
