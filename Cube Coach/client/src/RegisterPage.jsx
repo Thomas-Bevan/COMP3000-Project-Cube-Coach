@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function RegisterPage() {
+function RegisterPage({ setPage }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,6 +29,7 @@ function RegisterPage() {
         }
 
         localStorage.setItem("user", JSON.stringify(data));
+        setPage("timer");
         alert("Registered successfully");
     };
 

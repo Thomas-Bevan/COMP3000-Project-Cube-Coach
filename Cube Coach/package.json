@@ -1,0 +1,16 @@
+{
+  "name": "cube-coach",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run server --prefix server\"",
+    "server": "nodemon backend/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

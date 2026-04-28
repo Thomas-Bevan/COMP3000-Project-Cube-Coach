@@ -82,7 +82,7 @@ function AnalysisPage() {
         const ollMoveCount = countMoves(ollSolution);
         const pllMoveCount = countMoves(pllSolution);
 
-        setFeedback("Cross used " + crossMoveCount + "moves + " + crossFeedback + "\n" + f2lFeedback + "\n" + "OLL uses " + ollMoveCount + " moves\n" + "PLL uses " + pllMoveCount + " moves");
+        setFeedback(crossFeedback + "\n" + f2lFeedback + "\n" + "OLL uses " + ollMoveCount + " moves\n" + "PLL uses " + pllMoveCount + " moves");
 
     };
 
@@ -258,6 +258,8 @@ function AnalysisPage() {
                     <h1>Analysis</h1>
                     <p style={styles.subtitle}>
                         Input the scramble and the solution for feedback
+
+                        Solution must be input with yellow top, green front
                     </p>
 
                     <label style={styles.label}>Scramble</label>

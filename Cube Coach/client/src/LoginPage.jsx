@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function LoginPage() {
+function LoginPage({ setPage }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -22,6 +22,7 @@ function LoginPage() {
         }
 
         localStorage.setItem("user", JSON.stringify(data));
+        setPage("timer");
         alert("Logged in successfully");
 
     };

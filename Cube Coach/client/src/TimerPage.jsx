@@ -494,7 +494,7 @@ const styles = {
     },
     scramble: {
         position: "absolute",
-        top: "40px",
+        top: "90px",
         fontSize: "1.2rem",
         letterSpacing: "2px",
         color: "#F9FAFB"
