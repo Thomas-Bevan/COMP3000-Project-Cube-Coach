@@ -82,7 +82,7 @@ function AnalysisPage() {
         const ollMoveCount = countMoves(ollSolution);
         const pllMoveCount = countMoves(pllSolution);
 
-        setFeedback("Cross uses " + crossMoveCount + "\n" + f2lFeedback + "\n" + "OLL uses " + ollMoveCount + " moves\n" + "PLL uses " + pllMoveCount + " moves\n" + crossFeedback);
+        setFeedback("Cross used " + crossMoveCount + "moves + " + crossFeedback + "\n" + f2lFeedback + "\n" + "OLL uses " + ollMoveCount + " moves\n" + "PLL uses " + pllMoveCount + " moves");
 
     };
 
@@ -92,6 +92,114 @@ function AnalysisPage() {
                 i === index ? { ...pair, [field]: value } : pair
             )
         );
+    };
+
+    const getMovesBeforeCursor = (text, cursorPosition) => {
+        const beforeCursor = text.slice(0, cursorPosition).trim();
+
+        if (!beforeCursor) return "";
+
+        return beforeCursor.split(/\s+/).join(" ");
+    };
+
+    const previewAtCursor = (step, text, cursorPosition, f2lIndex = null) => {
+        const partialMoves = getMovesBeforeCursor(text, cursorPosition);
+
+        let cube = createSolvedCube();
+
+        if (step === "scramble") {
+            cube = applyAlgorithm(cube, partialMoves);
+            setCubeState(cube);
+            return;
+        }
+
+        cube = applyAlgorithm(cube, scramble);
+        cube = applyZ2(cube);
+
+        if (step === "cross") {
+            cube = applyAlgorithm(cube, partialMoves);
+        }
+
+        if (step === "f2l") {
+            cube = applyAlgorithm(cube, crossSolution);
+
+            f2lPairs.forEach((pair, index) => {
+                if (index < f2lIndex) {
+                    cube = applyAlgorithm(cube, pair.solution);
+                }
+            });
+
+            cube = applyAlgorithm(cube, partialMoves);
+        }
+
+        if (step === "oll") {
+            cube = applyAlgorithm(cube, crossSolution);
+
+            f2lPairs.forEach((pair) => {
+                cube = applyAlgorithm(cube, pair.solution);
+            });
+
+            cube = applyAlgorithm(cube, partialMoves);
+        }
+
+        if (step === "pll") {
+            cube = applyAlgorithm(cube, crossSolution);
+
+            f2lPairs.forEach((pair) => {
+                cube = applyAlgorithm(cube, pair.solution);
+            });
+
+            cube = applyAlgorithm(cube, ollSolution);
+            cube = applyAlgorithm(cube, partialMoves);
+        }
+
+        setCubeState(cube);
+    };
+
+    const previewUpToStep = (stepType, f2lIndex = null) => {
+        let cube = createSolvedCube();
+
+        cube = applyAlgorithm(cube, scramble);
+        cube = applyZ2(cube);
+
+
+
+        if (stepType === "cross") {
+            cube = applyAlgorithm(cube, crossSolution);
+        }
+
+        if (stepType === "f2l") {
+            cube = applyAlgorithm(cube, crossSolution);
+
+            f2lPairs.forEach((pair, index) => {
+                if (index <= f2lIndex) {
+                    cube = applyAlgorithm(cube, pair.solution);
+                }
+            });
+        }
+
+        if (stepType === "oll") {
+            cube = applyAlgorithm(cube, crossSolution);
+
+            f2lPairs.forEach((pair) => {
+                cube = applyAlgorithm(cube, pair.solution);
+            });
+
+            cube = applyAlgorithm(cube, ollSolution);
+        }
+
+        if (stepType === "pll") {
+            cube = applyAlgorithm(cube, crossSolution);
+
+            f2lPairs.forEach((pair) => {
+                cube = applyAlgorithm(cube, pair.solution);
+            });
+
+            cube = applyAlgorithm(cube, ollSolution);
+            cube = applyAlgorithm(cube, pllSolution);
+        }
+
+        setCubeState(cube);
     };
 
 
@@ -156,6 +264,8 @@ function AnalysisPage() {
                     <textarea
                         style={styles.textarea}
                         value={scramble}
+                        onClick={(e) => previewAtCursor("scramble", scramble, e.target.selectionStart)}
+                        onKeyUp={(e) => previewAtCursor("scramble", scramble, e.target.selectionStart)}
                         onChange={(e) => setScramble(e.target.value)}
                         placeholder="e.g. R U F L2 B' D'..."
                     />
@@ -164,6 +274,8 @@ function AnalysisPage() {
                     <input
                         style={styles.input}
                         value={crossSolution}
+                        onClick={(e) => previewAtCursor("cross", crossSolution, e.target.selectionStart)}
+                        onKeyUp={(e) => previewAtCursor("cross", crossSolution, e.target.selectionStart)}
                         onChange={(e) => setCrossSolution(e.target.value)}
                         placeholder="e.g. L D' R2 F..."
                     />
@@ -175,6 +287,8 @@ function AnalysisPage() {
                             <input
                                 style={styles.f2lInput}
                                 value={pair.solution}
+                                onClick={(e) => previewAtCursor("f2l", pair.solution, e.target.selectionStart, index)}
+                                onKeyUp={(e) => previewAtCursor("f2l", pair.solution, e.target.selectionStart, index)}
                                 onChange={(e) => updateF2LPair(index, "solution", e.target.value)}
                                 placeholder={`F2L Pair ${index + 1} solution`}
                             />
@@ -196,6 +310,8 @@ function AnalysisPage() {
                     <input
                         style={styles.input}
                         value={ollSolution}
+                        onClick={(e) => previewAtCursor("oll", ollSolution, e.target.selectionStart)}
+                        onKeyUp={(e) => previewAtCursor("oll", ollSolution, e.target.selectionStart)}
                         onChange={(e) => setOllSolution(e.target.value)}
                         placeholder="e.g. R U R' U R U2 R'"
                     />
@@ -204,6 +320,8 @@ function AnalysisPage() {
                     <input
                         style={styles.input}
                         value={pllSolution}
+                        onClick={(e) => previewAtCursor("pll", pllSolution, e.target.selectionStart)}
+                        onKeyUp={(e) => previewAtCursor("pll", pllSolution, e.target.selectionStart)}
                         onChange={(e) => setPllSolution(e.target.value)}
                         placeholder="e.g. R U R' U' R' F R2 U' R' U' R U R' F'"
                     />

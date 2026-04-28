@@ -3,6 +3,7 @@ import TimerPage from "./TimerPage";
 import AnalysisPage from "./AnalysisPage";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
+import AlgorithmsPage from "./AlgorithmsPage";
 
 function App() {
     const [page, setPage] = useState("timer");
@@ -25,12 +26,17 @@ function App() {
                 <button style={styles.button} onClick={() => setPage("register")}>
                     Register
                 </button>
+
+                <button style={styles.button} onClick={() => setPage("algorithms")}>
+                    Algorithms
+                </button>
             </nav>
 
             {page === "timer" && <TimerPage />}
             {page === "analysis" && <AnalysisPage />}
             {page === "login" && <LoginPage />}
             {page === "register" && <RegisterPage />}
+            {page === "algorithms" && <AlgorithmsPage />}
         </div>
     );
 }
